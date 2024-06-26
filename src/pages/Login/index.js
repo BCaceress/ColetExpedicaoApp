@@ -1,4 +1,3 @@
-
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -12,7 +11,7 @@ import {
 //import {router} from 'expo-router';
 import api from '../../services/api.js';
 import {useIsFocused} from '@react-navigation/native';
-const Login = ({ navigation }) => {
+const Login = ({navigation}) => {
   const [estaConectado, setEstaConectado] = useState(false);
   const isFocused = useIsFocused();
 
@@ -38,7 +37,7 @@ const Login = ({ navigation }) => {
     if (estaConectado) {
       // Se a conexão com a API for bem-sucedida, navegue para a próxima página.
       //  router.replace('/listaUsuarios');
-      navigation.navigate('ListaUsuarios');
+      navigation.replace('ListaUsuarios');
     } else {
       // Se a conexão com a API falhar, mostre um alerta.
       Alert.alert('Erro', 'Não foi possível conectar com a API.');

@@ -8,18 +8,21 @@ import {
   Alert,
   TouchableOpacity,
   Dimensions,
-  ScrollView,
   SafeAreaView,
 } from 'react-native';
 //import {router} from 'expo-router';
 import {useNavigation} from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
-import {Package, Search} from 'react-native-feather';
+import {
+  Package,
+  Search,
+  XCircle,
+  FileText,
+  CheckCircle,
+} from 'react-native-feather';
 import api from '../../../services/api.js';
-import FabButton from '../FAB/FabButton.js';
-//import SecondType from '../ButtonFAB/secondType.tsx';
+import {FloatingAction} from 'react-native-floating-action';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const {width} = Dimensions.get('window');
 
 export default function Status({name}) {
   const user = name;
@@ -138,11 +141,6 @@ export default function Status({name}) {
       });
     } else {
       Alert.alert('Verificar', 'Nenhuma etiqueta foi lida.', [{text: 'OK'}]);
-      navigation.navigate('ConfirmacaoBarcode', {
-        contador: contador,
-        barcodeList: barcodeList,
-        user: user,
-      });
     }
   };
   const funcaoCancelar = () => {
@@ -186,41 +184,68 @@ export default function Status({name}) {
     setEtiquetas(updatedEtiquetas);
   };
 
+  const actions = [
+    {
+      text: 'Ler Todas Etiquetas',
+      icon: <CheckCircle width={25} height={25} stroke="white" />,
+      name: 'bt_leTodas',
+      color: '#0000FF',
+      position: 1,
+    },
+    {
+      text: 'Cancelar Processo',
+      icon: <XCircle width={25} height={25} stroke="white" />,
+      name: 'bt_cancel',
+      color: '#FF0000',
+      position: 2,
+    },
+
+    {
+      text: 'Gerar Etiquetas',
+      icon: <FileText width={25} height={25} stroke="white" />,
+      name: 'bt_confirmation',
+      color: '#008000',
+      position: 3,
+    },
+  ];
   return (
-    <View>
-      {!showContainer ? (
-        <View style={styles.viewInput}>
-          <Search width={20} height={20} stroke="black" />
-          <TextInput
-            style={styles.textInput}
-            placeholderTextColor="#666"
-            showSoftInputOnFocus={false}
-            autoFocus
-            onChangeText={text => setBarcode(text)}
-            placeholder="Inserir etiqueta"
-            returnKeyType="next"
-            onSubmitEditing={pesquisaBarcode}
-            value={barcode}
-            blurOnSubmit={false}
-          />
-        </View>
-      ) : (
-        <View style={styles.viewInput}>
-          <Search size={20} color="#000" />
-          <TextInput
-            style={styles.textInput}
-            placeholderTextColor="#666"
-            showSoftInputOnFocus={false}
-            autoFocus
-            onChangeText={text => setBarcode(text)}
-            placeholder="Inserir etiqueta"
-            returnKeyType="next"
-            onSubmitEditing={pesquisaBarcode2}
-            value={barcode}
-            blurOnSubmit={false}
-          />
-        </View>
-      )}
+    <SafeAreaView style={{flex: 1}}>
+      <View>
+        {!showContainer ? (
+          <View style={styles.viewInput}>
+            <Search size={10} stroke="black" />
+            <TextInput
+              style={styles.textInput}
+              placeholderTextColor="#666"
+              showSoftInputOnFocus={false}
+              autoFocus
+              onChangeText={text => setBarcode(text)}
+              placeholder="Inserir etiqueta"
+              returnKeyType="next"
+              onSubmitEditing={pesquisaBarcode}
+              value={barcode}
+              blurOnSubmit={false}
+            />
+          </View>
+        ) : (
+          <View style={styles.viewInput}>
+            <Search size={10} color="#000" />
+            <TextInput
+              style={styles.textInput}
+              placeholderTextColor="#666"
+              showSoftInputOnFocus={false}
+              autoFocus
+              onChangeText={text => setBarcode(text)}
+              placeholder="Inserir etiqueta"
+              returnKeyType="next"
+              onSubmitEditing={pesquisaBarcode2}
+              value={barcode}
+              blurOnSubmit={false}
+            />
+          </View>
+        )}
+      </View>
+
       {showContainer ? (
         <View style={styles.container}>
           <PagerView style={styles.pagerView} initialPage={0}>
@@ -275,112 +300,138 @@ export default function Status({name}) {
           </PagerView>
         </View>
       ) : null}
-      <View>
-        {showContainer ? (
-          <View style={styles.container3}>
-            <PagerView initialPage={0}>
-              <View style={styles.pages2} key="1">
-                <View style={styles.tituloPage}>
-                  <Text style={styles.tituloLista}>
-                    <Package size={16} stroke="black" /> Coleta atual
-                  </Text>
-                  <Text style={styles.tituloLista}>
-                    {'    '} {contador} de {etiquetas.length}
-                  </Text>
-                </View>
-
-                <FlatList
-                  data={barcodeList.romaneio.etiquetas}
-                  keyExtractor={item => item.seq}
-                  renderItem={({item}) => {
-                    if (item.codSituacao === 9) {
-                      return (
-                        <View style={styles.listItem}>
-                          <Text>
-                            {item.programa}.{item.seq}
-                          </Text>
-                          <Text>Tam. {item.tamanho}</Text>
-                          <Text>{item.quantidade} PR</Text>
-                        </View>
-                      );
-                    } else {
-                      return null;
-                    }
-                  }}
-                />
-              </View>
-              <View style={styles.pages2} key="2">
-                <View style={styles.tituloPage}>
-                  <Text style={styles.tituloLista}>
-                    {' '}
-                    <Package size={20} color="#000" style={styles.icon} />{' '}
-                    Coletas a fazer
-                  </Text>
-                  {leTodasEtiquetas ? (
-                    <TouchableOpacity style={styles.button} onPress={lerTodas}>
-                      <Text style={styles.buttonText}> Ler todas</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-                <FlatList
-                  data={barcodeList.romaneio.etiquetas}
-                  keyExtractor={item => item.seq}
-                  renderItem={({item}) => {
-                    if (item.codSituacao === 0 || item.codSituacao === 1) {
-                      return (
-                        <View style={styles.listItem}>
-                          <Text>
-                            {item.programa}.{item.seq}
-                          </Text>
-                          <Text>Tam. {item.tamanho}</Text>
-                          <Text>{item.quantidade} PR</Text>
-                        </View>
-                      );
-                    } else {
-                      return null;
-                    }
-                  }}
-                />
-              </View>
-              <View style={styles.pages2} key="3">
-                <Text style={styles.tituloLista}>
-                  {' '}
-                  <Package size={20} color="#000" style={styles.icon} /> Coletas
-                  anteriores
-                </Text>
-
-                <FlatList
-                  data={barcodeList.romaneio.etiquetas}
-                  keyExtractor={item => item.seq}
-                  renderItem={({item}) => {
-                    if (item.codSituacao === 2 || item.codSituacao === 3) {
-                      return (
-                        <View style={styles.listItem}>
-                          <Text>
-                            {item.programa}.{item.seq}
-                          </Text>
-                          <Text>Tam. {item.tamanho}</Text>
-                          <Text>{item.quantidade} PR</Text>
-                        </View>
-                      );
-                    } else {
-                      return null;
-                    }
-                  }}
-                />
-              </View>
-            </PagerView>
-          </View>
-        ) : null}
-      </View>
       {showContainer ? (
-        <FabButton
-          style={{bottom: -80, right: 50}}
-          onCancelPress={funcaoCancelar}
-          onConfirmationPress={funcaoConfirmar}
+        <PagerView style={{flex: 1, height: '100%'}} initialPage={0}>
+          <View style={styles.pages2} key="1">
+            <View style={styles.tituloPage}>
+              <Text style={styles.tituloLista}>
+                <Package width={22} height={22} stroke="black" /> Coleta atual
+              </Text>
+              <Text style={styles.tituloLista}>
+                {'    '} {contador} de {etiquetas.length}
+              </Text>
+            </View>
+            <FlatList
+              data={barcodeList.romaneio.etiquetas}
+              keyExtractor={item => item.seq}
+              renderItem={({item}) => {
+                if (item.codSituacao === 9) {
+                  return (
+                    <View style={styles.listItem}>
+                      <Text>
+                        {item.programa}.{item.seq}
+                      </Text>
+                      <Text>Tam. {item.tamanho}</Text>
+                      <Text>{item.quantidade} PR</Text>
+                    </View>
+                  );
+                } else {
+                  return null;
+                }
+              }}
+            />
+          </View>
+          <View style={styles.pages2} key="2">
+            <View style={styles.tituloPage}>
+              <Text style={styles.tituloLista}>
+                {' '}
+                <Package
+                  width={22}
+                  height={22}
+                  color="#000"
+                  style={styles.icon}
+                />{' '}
+                Coletas a fazer
+              </Text>
+              {leTodasEtiquetas ? (
+                <TouchableOpacity style={styles.button} onPress={lerTodas}>
+                  <Text style={styles.buttonText}> Ler todas</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            <FlatList
+              data={barcodeList.romaneio.etiquetas}
+              keyExtractor={item => item.seq}
+              renderItem={({item}) => {
+                if (item.codSituacao === 0 || item.codSituacao === 1) {
+                  return (
+                    <View style={styles.listItem}>
+                      <Text>
+                        {item.programa}.{item.seq}
+                      </Text>
+                      <Text>Tam. {item.tamanho}</Text>
+                      <Text>{item.quantidade} PR</Text>
+                    </View>
+                  );
+                } else {
+                  return null;
+                }
+              }}
+            />
+          </View>
+          <View style={styles.pages2} key="3">
+            <Text style={styles.tituloLista}>
+              {' '}
+              <Package
+                width={22}
+                height={22}
+                color="#000"
+                style={styles.icon}
+              />{' '}
+              Coletas anteriores
+            </Text>
+            <FlatList
+              data={barcodeList.romaneio.etiquetas}
+              keyExtractor={item => item.seq}
+              renderItem={({item}) => {
+                if (item.codSituacao === 2 || item.codSituacao === 3) {
+                  return (
+                    <View style={styles.listItem}>
+                      <Text>
+                        {item.programa}.{item.seq}
+                      </Text>
+                      <Text>Tam. {item.tamanho}</Text>
+                      <Text>{item.quantidade} PR</Text>
+                    </View>
+                  );
+                } else {
+                  return null;
+                }
+              }}
+            />
+          </View>
+        </PagerView>
+      ) : null}
+      {showContainer ? (
+        <FloatingAction
+          actions={actions.filter(action => {
+            // Filtra as ações com base no valor de leTodasEtiquetas
+            if (action.name === 'bt_leTodas') {
+              return leTodasEtiquetas;
+            }
+            return true; // Mantém as outras ações
+          })}
+          color="#09A08D"
+          onPressItem={name => {
+            switch (name) {
+              case 'bt_leTodas':
+                // Lógica para o botão "Ler Todas Etiquetas"
+                lerTodas();
+                break;
+              case 'bt_cancel':
+                // Lógica para o botão "Cancelar Processo"
+                funcaoCancelar();
+                break;
+              case 'bt_confirmation':
+                // Lógica para o botão "Gerar Etiquetas"
+                funcaoConfirmar();
+                break;
+              default:
+            }
+          }}
         />
       ) : null}
-    </View>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
@@ -389,14 +440,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     flexDirection: 'row',
     alignItems: 'center',
-
     paddingHorizontal: 10,
     marginBottom: 15,
     paddingStart: 12,
     paddingEnd: 18,
     marginStart: 14,
     marginEnd: 14,
-    marginTop: -62,
+    marginTop: -67,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 6,
@@ -410,23 +460,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingStart: 18,
-    paddingEnd: 18,
-    marginTop: -8,
+    paddingStart: 12,
+    paddingEnd: 12,
+    marginTop: -20,
     marginStart: 14,
     marginEnd: 14,
     borderRadius: 6,
     paddingTop: 12,
     paddingBottom: 6,
     zIndex: 99,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    shadowRadius: 10,
+    shadowOpacity: 1,
   },
   pagerView: {
     flex: 1,
-  },
-  tituloPage: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingEnd: 5,
   },
 
   pages: {
@@ -451,7 +502,6 @@ const styles = StyleSheet.create({
   },
 
   //LISTA
-
   pages2: {
     flexDirection: 'column',
     marginTop: -28,
@@ -459,7 +509,7 @@ const styles = StyleSheet.create({
   },
   listItem: {
     padding: 5,
-    marginTop: 10,
+    marginTop: 8,
     backgroundColor: '#d9d9d9',
     borderColor: '#000',
     flexDirection: 'row',
@@ -472,6 +522,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     marginStart: 14,
     marginEnd: 14,
+  },
+  tituloPage: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingEnd: 5,
   },
   tituloLista: {
     fontSize: 20,

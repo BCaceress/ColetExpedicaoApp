@@ -55,7 +55,7 @@ const ListaUsuarios = ({navigation}) => {
             onPress={() => {
               // router.replace(`/leitura/${item.USRID}`);
               //router.push("../confirmacao");
-              navigation.navigate('LeituraBarcode', {id: item.USRID});
+              navigation.replace('LeituraBarcode', {id: item.USRID});
             }}>
             <View style={styles.informacoes}>
               <Text style={styles.distancia}>{item.NOME}</Text>
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     color: '#464646',
   },
   boasVindas: {
-    marginTop: 24,
+    marginTop: 10,
     fontSize: 26,
     lineHeight: 42,
     fontWeight: 'bold',

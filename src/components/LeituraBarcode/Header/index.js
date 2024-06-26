@@ -8,34 +8,35 @@ import {
   Alert,
 } from 'react-native';
 import {LogOut} from 'react-native-feather';
-//import {useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 const statusBarHeight = StatusBar.currentHeight
   ? StatusBar.currentHeight + 0
   : 64;
-//const navigation = useNavigation();
-const handleExit = () => {
-  Alert.alert(
-    'Confirmação',
-    'Deseja realmente sair?',
-    [
-      {
-        text: 'Cancelar',
-        style: 'cancel',
-      },
-      {
-        text: 'Sair',
-        onPress: () => {
-          // Navegue para a tela anterior
-          //  navigation.goBack();
-        },
-      },
-    ],
-    {cancelable: true},
-  );
-};
 
 export default function Header({name}) {
+  const navigation = useNavigation();
+  const handleExit = () => {
+    Alert.alert(
+      'Confirmação',
+      'Deseja realmente sair?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          onPress: () => {
+            // Navegue para a tela anterior
+            //  navigation.goBack();
+            navigation.replace('ListaUsuarios');
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
   return (
     <View style={styles.container}>
       <View style={styles.content}>
