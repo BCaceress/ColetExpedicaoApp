@@ -36,11 +36,12 @@ const Login = ({navigation}) => {
   const navegarProximaPagina = async () => {
     if (estaConectado) {
       // Se a conexão com a API for bem-sucedida, navegue para a próxima página.
-      //  router.replace('/listaUsuarios');
+
       navigation.replace('ListaUsuarios');
     } else {
       // Se a conexão com a API falhar, mostre um alerta.
       Alert.alert('Erro', 'Não foi possível conectar com a API.');
+      
       fetchData();
     }
   };

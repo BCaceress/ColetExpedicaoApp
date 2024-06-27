@@ -19,7 +19,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 Icon.loadFont();
 
 const statusBarHeight = StatusBar.currentHeight
-  ? StatusBar.currentHeight + 16
+  ? StatusBar.currentHeight + 2
   : 64;
 export default function ConfirmacaoBarcode() {
   const route = useRoute();
@@ -54,7 +54,6 @@ export default function ConfirmacaoBarcode() {
   };
 
   const funcaoConfirmar = () => {
-    console.log(barcodeList);
     Alert.alert(
       'Confirmação',
       'Deseja realmente confirmar?',
@@ -92,6 +91,7 @@ export default function ConfirmacaoBarcode() {
             onPress: () => {
               {
                 //  router.replace(`/leitura/${user}`);
+                navigation.replace('LeituraBarcode', {id: user});
               }
             },
           },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   textoEsquerda: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: 'bold',
   },
   buttonUser: {
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   containerCentral: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 28,
     marginStart: 14,
     marginEnd: 14,
   },

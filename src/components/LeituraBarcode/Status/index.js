@@ -218,7 +218,7 @@ export default function Status({name}) {
               style={styles.textInput}
               placeholderTextColor="#666"
               showSoftInputOnFocus={false}
-              autoFocus
+              autoFocus={true}
               onChangeText={text => setBarcode(text)}
               placeholder="Inserir etiqueta"
               returnKeyType="next"
@@ -234,7 +234,7 @@ export default function Status({name}) {
               style={styles.textInput}
               placeholderTextColor="#666"
               showSoftInputOnFocus={false}
-              autoFocus
+              autoFocus={true}
               onChangeText={text => setBarcode(text)}
               placeholder="Inserir etiqueta"
               returnKeyType="next"
@@ -405,25 +405,21 @@ export default function Status({name}) {
       {showContainer ? (
         <FloatingAction
           actions={actions.filter(action => {
-            // Filtra as ações com base no valor de leTodasEtiquetas
             if (action.name === 'bt_leTodas') {
               return leTodasEtiquetas;
             }
-            return true; // Mantém as outras ações
+            return true;
           })}
           color="#09A08D"
           onPressItem={name => {
             switch (name) {
               case 'bt_leTodas':
-                // Lógica para o botão "Ler Todas Etiquetas"
                 lerTodas();
                 break;
               case 'bt_cancel':
-                // Lógica para o botão "Cancelar Processo"
                 funcaoCancelar();
                 break;
               case 'bt_confirmation':
-                // Lógica para o botão "Gerar Etiquetas"
                 funcaoConfirmar();
                 break;
               default:
