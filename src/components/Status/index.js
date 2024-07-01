@@ -376,7 +376,7 @@ export default function Status({ name }) {
               <ActivityIndicator size="large" color="#09A08D" />
             ) : (
               <FlatList
-                data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 0 || item.codSituacao === 1)}
+                data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 0 || item.codSituacao === 1 || item.codSituacao === 2)}
                 keyExtractor={item => item.seq}
                 renderItem={({ item }) => (
                   <View style={styles.listItem}>
@@ -402,7 +402,7 @@ export default function Status({ name }) {
               Coletas anteriores
             </Text>
             <FlatList
-              data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 2 || item.codSituacao === 3)}
+              data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 3)}
               keyExtractor={item => item.seq}
               renderItem={({ item }) => (
                 <View style={styles.listItem}>
