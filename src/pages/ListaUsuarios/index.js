@@ -1,12 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   FlatList,
-  StatusBar,
   SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import api from '../../services/api';
 
@@ -14,13 +14,14 @@ const statusBarHeight = StatusBar.currentHeight
   ? StatusBar.currentHeight + 2
   : 64;
 
-const ListaUsuarios = ({navigation}) => {
+const ListaUsuarios = ({ navigation }) => {
   const [users, setUsers] = useState([]);
   const [empresa, setEmpresa] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       const apiInstance = await api();
+
       try {
         // Primeira chamada de API
         const empresaResponse = await apiInstance.get(
@@ -35,7 +36,6 @@ const ListaUsuarios = ({navigation}) => {
         console.error('Erro ao obter dados da API:', error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -46,23 +46,27 @@ const ListaUsuarios = ({navigation}) => {
         <Text style={styles.legenda}>Selecione na lista abaixo o usuário</Text>
       </View>
       <Text style={styles.titulo}>Usuários</Text>
-      <FlatList
-        data={users}
-        keyExtractor={item => item.USRID}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={styles.cartao}
-            onPress={() => {
-              // router.replace(`/leitura/${item.USRID}`);
-              //router.push("../confirmacao");
-              navigation.replace('LeituraBarcode', {id: item.USRID});
-            }}>
-            <View style={styles.informacoes}>
-              <Text style={styles.distancia}>{item.NOME}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+      {!users.mensagem ? (
+        <FlatList
+          data={users}
+          keyExtractor={item => item.USRID}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.cartao}
+              onPress={() => {
+                navigation.replace('LeituraBarcode', { id: item.USRID });
+              }}>
+              <View style={styles.informacoes}>
+                <Text style={styles.distancia}>{item.NOME}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text>{users.mensagem}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -103,6 +107,11 @@ const styles = StyleSheet.create({
     elevation: 4,
     shadowOpacity: 0.23,
     shadowRadius: 2.62,
+  },
+  emptyContainer: {
+    marginHorizontal: 16,
+    fontSize: 26,
+    fontWeight: 'bold',
   },
   imagem: {
     width: 48,

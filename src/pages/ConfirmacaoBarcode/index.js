@@ -1,27 +1,28 @@
-import React, {useState, useEffect} from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  StatusBar,
-  SafeAreaView,
-  Alert,
+  View,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import api from '../../services/api';
-import {ArrowLeft} from 'react-native-feather';
+import { ArrowLeft } from 'react-native-feather';
 import InputSpinner from 'react-native-input-spinner';
 import SelectDropdown from 'react-native-select-dropdown';
-import Styles from './Styles';
-import {useRoute} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import api from '../../services/api';
+import Styles from './Styles';
 Icon.loadFont();
 
 const statusBarHeight = StatusBar.currentHeight
   ? StatusBar.currentHeight + 2
   : 64;
 export default function ConfirmacaoBarcode() {
+  const [isLoading, setIsLoading] = useState(false);
   const route = useRoute();
   const contador = route.params.contador;
   const barcodeList = route.params.barcodeList;
@@ -42,14 +43,10 @@ export default function ConfirmacaoBarcode() {
         },
         {
           text: 'Sim',
-          onPress: () => {
-            {
-              navigation.goBack();
-            }
-          },
+          onPress: navigation.goBack(),
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
 
@@ -64,50 +61,45 @@ export default function ConfirmacaoBarcode() {
         },
         {
           text: 'Sim',
-          onPress: () => {
-            {
-              enviarDados();
-            }
-          },
+          onPress: enviarDados,
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
 
   const enviarDados = async () => {
     const apiInstance = await api();
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 100));
     try {
-      const resposta = await apiInstance.post(
+      await apiInstance.post(
         '/expedicao/expedicao',
         barcodeList,
       );
+      setIsLoading(false);
       Alert.alert(
         'Sucesso',
         'Ficha gerada com sucesso!',
         [
           {
             text: 'OK',
-            onPress: () => {
-              {
-                //  router.replace(`/leitura/${user}`);
-                navigation.replace('LeituraBarcode', {id: user});
-              }
-            },
+            onPress: navigation.replace('LeituraBarcode', { id: user }),
           },
         ],
-        {cancelable: false},
+        { cancelable: false },
       );
     } catch (erro) {
       console.error(erro);
+      setIsLoading(false);
     }
   };
   const emojisWithIcons = [
-    {title: '0 - Pago', icon: 'cash-check', id: '0'},
-    {title: '1 - A pagar', icon: 'cash-refund', id: '1'},
-    {title: '2 - Transporte Remetente', icon: 'truck', id: '2'},
-    {title: '3 - Transporte Destinatário', icon: 'truck-delivery', id: '3'},
-    {title: '9 - Sem Transporte', icon: 'truck-remove', id: '9'},
+    { title: '0 - Pago', icon: 'cash-check', id: '0' },
+    { title: '1 - A pagar', icon: 'cash-refund', id: '1' },
+    { title: '2 - Transporte Remetente', icon: 'truck', id: '2' },
+    { title: '3 - Transporte Destinatário', icon: 'truck-delivery', id: '3' },
+    { title: '9 - Sem Transporte', icon: 'truck-remove', id: '9' },
   ];
 
   return (
@@ -165,7 +157,7 @@ export default function ConfirmacaoBarcode() {
               <View
                 style={{
                   ...styles.dropdownItemStyle,
-                  ...(isSelected && {backgroundColor: '#D2D9DF'}),
+                  ...(isSelected && { backgroundColor: '#D2D9DF' }),
                 }}>
                 <Icon name={item.icon} style={styles.dropdownItemIconStyle} />
                 <Text style={styles.dropdownItemTxtStyle}>{item.title}</Text>
@@ -196,29 +188,16 @@ export default function ConfirmacaoBarcode() {
         </View>
       </View>
       <View style={styles.containerInferior}>
-        <TouchableOpacity
-          style={{
-            padding: 10,
-            width: '100%',
-            height: 50,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#09A08D',
-            marginTop: 80,
-          }}
+        <TouchableOpacity style={styles.btConfirmar}
           onPress={() => {
             funcaoConfirmar();
           }}>
-          <Text
-            style={{
-              color: 'white',
-              textAlign: 'center',
-              color: '#fff',
-              fontSize: 19,
-              fontWeight: 'bold',
-            }}>
-            Confirmar
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.txtConfirmar}>
+              Confirmar
+            </Text>)}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -296,12 +275,11 @@ const styles = StyleSheet.create({
   dropdownButtonStyle: {
     height: 50,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 6,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    borderRadius: 6,
     elevation: 4,
     shadowOpacity: 0.23,
     shadowRadius: 2.62,
@@ -340,5 +318,21 @@ const styles = StyleSheet.create({
   dropdownItemIconStyle: {
     fontSize: 28,
     marginRight: 8,
+  },
+  //button confirmar
+  btConfirmar: {
+    padding: 10,
+    width: '100%',
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#09A08D',
+    marginTop: 80,
+  },
+  txtConfirmar: {
+    textAlign: 'center',
+    color: '#fff',
+    fontSize: 19,
+    fontWeight: 'bold',
   },
 });

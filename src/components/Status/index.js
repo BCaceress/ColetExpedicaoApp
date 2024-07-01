@@ -1,30 +1,30 @@
-import React, {useState, useEffect} from 'react';
+/* eslint-disable quotes */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  FlatList,
+  ActivityIndicator,
   Alert,
-  TouchableOpacity,
-  Dimensions,
+  FlatList,
   SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-//import {router} from 'expo-router';
-import {useNavigation} from '@react-navigation/native';
-import PagerView from 'react-native-pager-view';
 import {
+  CheckCircle,
+  FileText,
   Package,
   Search,
   XCircle,
-  FileText,
-  CheckCircle,
 } from 'react-native-feather';
-import api from '../../../services/api.js';
-import {FloatingAction} from 'react-native-floating-action';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FloatingAction } from 'react-native-floating-action';
+import PagerView from 'react-native-pager-view';
+import api from '../../services/api.js';
 
-export default function Status({name}) {
+export default function Status({ name }) {
   const user = name;
   const navigation = useNavigation();
   const [barcode, setBarcode] = useState('');
@@ -32,16 +32,21 @@ export default function Status({name}) {
   const [showContainer, setShowContainer] = useState(false);
   const [etiquetas, setEtiquetas] = useState([]);
   const [contador, setContador] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [leTodasEtiquetas, setLeitura] = useState(false);
+  const refPagerView = useRef(null);
+
+  const moveToPage = (index) => {
+    requestAnimationFrame(() => refPagerView.current?.setPage(index));
+  };
 
   useEffect(() => {
     // Recupera os valores do AsyncStorage
     const fetchData = async () => {
       try {
-        const leTodasEtiquetas = await AsyncStorage.getItem('@MyApp:leTodas');
-
-        if (leTodasEtiquetas !== null) {
-          const parsedLeitura = JSON.parse(leTodasEtiquetas);
+        const lerTodas = await AsyncStorage.getItem('@MyApp:leTodas');
+        if (lerTodas !== null) {
+          const parsedLeitura = JSON.parse(lerTodas);
           setLeitura(parsedLeitura);
         }
       } catch (error) {
@@ -60,14 +65,20 @@ export default function Status({name}) {
           `/expedicao/romaneio?etiqueta=${barcode}`,
         );
         if (response.status === 200) {
-          await setBarcodeList(response.data);
+          setBarcodeList(response.data);
           setShowContainer(true);
           await setEtiquetas(response.data.romaneio.etiquetas);
           // alterarCodSituacao();
-          //console.log(response.data.romaneio.etiquetas);
+          const todosValoresValidos = response.data.romaneio.etiquetas.every((etiqueta) => {
+            const valor = etiqueta.codSituacao;
+            return valor === 2 || valor === 3;
+          });
+          if (todosValoresValidos) {
+            Alert.alert(`Romaneio: ${JSON.stringify(response.data.romaneio.romaneio)}`, 'Não há etiquetas a coletar para este romaneio.', [{ text: 'OK' }]);
+          }
           setBarcode('');
         } else {
-          Alert.alert('Erro', 'Romaneio não existe.', [{text: 'OK'}]);
+          Alert.alert('Erro', 'Romaneio não existe.', [{ text: 'OK' }]);
           setBarcode('');
         }
       } catch (error) {
@@ -75,10 +86,12 @@ export default function Status({name}) {
         setBarcode('');
       }
     } else {
-      Alert.alert('Erro', 'Formato de etiqueta inválido.', [{text: 'OK'}]);
+      Alert.alert('Erro', 'Formato de etiqueta inválido.', [{ text: 'OK' }]);
       setBarcode('');
     }
+
   };
+
 
   const pesquisaBarcode2 = async () => {
     //Valida a leitura da etiqueta
@@ -86,53 +99,59 @@ export default function Status({name}) {
       validaRomaneio();
       setBarcode('');
     } else {
-      Alert.alert('Erro', 'Formato de etiqueta inválido.', [{text: 'OK'}]);
+      Alert.alert('Erro', 'Formato de etiqueta inválido.', [{ text: 'OK' }]);
     }
   };
 
-  const alterarCodSituacao = async () => {
-    //Valida qual etiqueta e altera o valor do codSituacao
+  const etiquetasMap = {};
+  etiquetas.forEach(etiqueta => {
+    etiquetasMap[etiqueta.programa + '.' + etiqueta.seq] = etiqueta;
+  });
 
-    etiquetas.forEach(etiqueta => {
-      if (etiqueta.programa + '.' + etiqueta.seq === barcode.substring(0, 9)) {
-        if (etiqueta.codSituacao === 0 || etiqueta.codSituacao === 1) {
-          etiqueta.codSituacao = 9;
-          setContador(prevContador => prevContador + 1);
-        } else if (etiqueta.codSituacao === 2 || etiqueta.codSituacao === 3) {
-          Alert.alert(
-            'Verificar',
-            'Esta etiqueta já foi lida em outra coleta, ou o pedido já foi faturado.',
-            [{text: 'OK'}],
-          );
-        } else {
-          Alert.alert('Verificar', 'Esta etiqueta já foi lida nesta coleta.', [
-            {text: 'OK'},
-          ]);
-        }
+  const alterarCodSituacao = async () => {
+    const secondDotIndex = barcode.lastIndexOf(".");
+    const result = barcode.substring(0, secondDotIndex);
+    if (etiquetasMap[result]) {
+      const etiqueta = etiquetasMap[result];
+      if (etiqueta.codSituacao === 0 || etiqueta.codSituacao === 1) {
+        etiqueta.codSituacao = 9;
+        setContador(prevContador => prevContador + 1);
+      } else if (etiqueta.codSituacao === 2 || etiqueta.codSituacao === 3) {
+        Alert.alert(
+          'Verificar',
+          'Esta etiqueta já foi lida em outra coleta, ou o pedido já foi faturado.',
+          [{ text: 'OK' }],
+        );
+      } else {
+        Alert.alert('Verificar', 'Esta etiqueta já foi lida nesta coleta.', [
+          { text: 'OK' },
+        ]);
       }
-    });
+    }
   };
 
   function validarFormato(texto) {
-    const regex = /^[0-9.]{7,11}$/;
+    const regex = /^[0-9.]{4,14}$/;
     return regex.test(texto);
   }
 
   const validaRomaneio = async () => {
     //Valida se a etiqueta é igual a do romaneio
-    if (barcode.substring(0, 7) == barcodeList.romaneio.romaneio) {
+    const firstDotIndex = barcode.indexOf(".");
+    const result = barcode.substring(0, firstDotIndex);
+    if (result == barcodeList.romaneio.romaneio) {
       alterarCodSituacao();
     } else {
       Alert.alert(
         'Verificar',
         'Esta etiqueta não faz parte do romaneio que está sendo coletado.',
-        [{text: 'OK'}],
+        [{ text: 'OK' }],
       );
     }
     setBarcode('');
   };
 
-  const funcaoConfirmar = () => {
+  function funcaoConfirmar() {
     if (contador >= 1) {
       navigation.navigate('ConfirmacaoBarcode', {
         contador: contador,
@@ -140,16 +159,18 @@ export default function Status({name}) {
         user: user,
       });
     } else {
-      Alert.alert('Verificar', 'Nenhuma etiqueta foi lida.', [{text: 'OK'}]);
+      Alert.alert('Verificar', 'Nenhuma etiqueta foi lida.', [{ text: 'OK' }]);
     }
-  };
-  const funcaoCancelar = () => {
+  }
+  function funcaoCancelar() {
     setShowContainer(false);
     setBarcodeList('');
     setBarcode('');
     setContador(0);
-    setEtiquetas('');
-  };
+    setIsLoading(false);
+    moveToPage(0);
+    setEtiquetas([]);
+  }
   const lerTodas = () => {
     Alert.alert(
       'Confirmação',
@@ -161,27 +182,31 @@ export default function Status({name}) {
         },
         {
           text: 'Sim',
-          onPress: () => {
-            {
-              lerTodasEtiquetas();
-            }
-          },
+          onPress: lerTodasEtiquetas,
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
   const lerTodasEtiquetas = async () => {
-    const updatedEtiquetas = etiquetas.map(etiqueta => {
-      if (etiqueta.codSituacao === 0 || etiqueta.codSituacao === 1) {
-        etiqueta.codSituacao = 9;
-        setContador(prevContador => prevContador + 1);
-      }
-      return etiqueta;
-    });
+    try {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const updatedEtiquetas = etiquetas.map(etiqueta => {
+        if (etiqueta.codSituacao === 0 || etiqueta.codSituacao === 1) {
+          etiqueta.codSituacao = 9;
+          setContador(prevContador => prevContador + 1);
+        }
+        return etiqueta;
+      });
+      setEtiquetas(updatedEtiquetas);
+      setIsLoading(false);
+      moveToPage(0);
 
-    // Atualize o estado com as etiquetas modificadas
-    setEtiquetas(updatedEtiquetas);
+    } catch (error) {
+      console.error('Erro:', error);
+      setIsLoading(false);
+    }
   };
 
   const actions = [
@@ -201,15 +226,16 @@ export default function Status({name}) {
     },
 
     {
-      text: 'Gerar Etiquetas',
+      text: 'Gerar Fichas de Expedição',
       icon: <FileText width={25} height={25} stroke="white" />,
       name: 'bt_confirmation',
       color: '#008000',
       position: 3,
     },
   ];
+
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <SafeAreaView style={styles.safeArea}>
       <View>
         {!showContainer ? (
           <View style={styles.viewInput}>
@@ -301,7 +327,7 @@ export default function Status({name}) {
         </View>
       ) : null}
       {showContainer ? (
-        <PagerView style={{flex: 1, height: '100%'}} initialPage={0}>
+        <PagerView style={styles.pager} initialPage={0} ref={refPagerView}>
           <View style={styles.pages2} key="1">
             <View style={styles.tituloPage}>
               <Text style={styles.tituloLista}>
@@ -311,25 +337,23 @@ export default function Status({name}) {
                 {'    '} {contador} de {etiquetas.length}
               </Text>
             </View>
-            <FlatList
-              data={barcodeList.romaneio.etiquetas}
-              keyExtractor={item => item.seq}
-              renderItem={({item}) => {
-                if (item.codSituacao === 9) {
-                  return (
-                    <View style={styles.listItem}>
-                      <Text>
-                        {item.programa}.{item.seq}
-                      </Text>
-                      <Text>Tam. {item.tamanho}</Text>
-                      <Text>{item.quantidade} PR</Text>
-                    </View>
-                  );
-                } else {
-                  return null;
-                }
-              }}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#09A08D" />
+            ) : (
+              <FlatList
+                data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 9)}
+                keyExtractor={item => item.seq}
+                renderItem={({ item }) => (
+                  <View style={styles.listItem}>
+                    <Text>
+                      {item.programa}.{item.seq}
+                    </Text>
+                    <Text>Tam. {item.tamanho}</Text>
+                    <Text>{item.quantidade} PR</Text>
+                  </View>
+                )}
+              />
+            )}
           </View>
           <View style={styles.pages2} key="2">
             <View style={styles.tituloPage}>
@@ -349,25 +373,23 @@ export default function Status({name}) {
                 </TouchableOpacity>
               ) : null}
             </View>
-            <FlatList
-              data={barcodeList.romaneio.etiquetas}
-              keyExtractor={item => item.seq}
-              renderItem={({item}) => {
-                if (item.codSituacao === 0 || item.codSituacao === 1) {
-                  return (
-                    <View style={styles.listItem}>
-                      <Text>
-                        {item.programa}.{item.seq}
-                      </Text>
-                      <Text>Tam. {item.tamanho}</Text>
-                      <Text>{item.quantidade} PR</Text>
-                    </View>
-                  );
-                } else {
-                  return null;
-                }
-              }}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#09A08D" />
+            ) : (
+              <FlatList
+                data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 0 || item.codSituacao === 1)}
+                keyExtractor={item => item.seq}
+                renderItem={({ item }) => (
+                  <View style={styles.listItem}>
+                    <Text>
+                      {item.programa}.{item.seq}
+                    </Text>
+                    <Text>Tam. {item.tamanho}</Text>
+                    <Text>{item.quantidade} PR</Text>
+                  </View>
+                )}
+              />
+            )}
           </View>
           <View style={styles.pages2} key="3">
             <Text style={styles.tituloLista}>
@@ -381,56 +403,55 @@ export default function Status({name}) {
               Coletas anteriores
             </Text>
             <FlatList
-              data={barcodeList.romaneio.etiquetas}
+              data={barcodeList.romaneio.etiquetas.filter(item => item.codSituacao === 2 || item.codSituacao === 3)}
               keyExtractor={item => item.seq}
-              renderItem={({item}) => {
-                if (item.codSituacao === 2 || item.codSituacao === 3) {
-                  return (
-                    <View style={styles.listItem}>
-                      <Text>
-                        {item.programa}.{item.seq}
-                      </Text>
-                      <Text>Tam. {item.tamanho}</Text>
-                      <Text>{item.quantidade} PR</Text>
-                    </View>
-                  );
-                } else {
-                  return null;
-                }
-              }}
+              renderItem={({ item }) => (
+                <View style={styles.listItem}>
+                  <Text>
+                    {item.programa}.{item.seq}
+                  </Text>
+                  <Text>Tam. {item.tamanho}</Text>
+                  <Text>{item.quantidade} PR</Text>
+                </View>
+              )}
             />
           </View>
         </PagerView>
-      ) : null}
-      {showContainer ? (
-        <FloatingAction
-          actions={actions.filter(action => {
-            if (action.name === 'bt_leTodas') {
-              return leTodasEtiquetas;
-            }
-            return true;
-          })}
-          color="#09A08D"
-          onPressItem={name => {
-            switch (name) {
-              case 'bt_leTodas':
-                lerTodas();
-                break;
-              case 'bt_cancel':
-                funcaoCancelar();
-                break;
-              case 'bt_confirmation':
-                funcaoConfirmar();
-                break;
-              default:
-            }
-          }}
-        />
-      ) : null}
-    </SafeAreaView>
+      ) : null
+      }
+      {
+        showContainer ? (
+          <FloatingAction
+            actions={actions.filter(action => {
+              if (action.name === 'bt_leTodas') {
+                return leTodasEtiquetas;
+              }
+              return true;
+            })}
+            color="#09A08D"
+            onPressItem={item => {
+              switch (item) {
+                case 'bt_leTodas':
+                  lerTodas();
+                  break;
+                case 'bt_cancel':
+                  funcaoCancelar();
+                  break;
+                case 'bt_confirmation':
+                  funcaoConfirmar();
+                  break;
+                default:
+              }
+            }}
+          />
+        ) : null
+      }
+    </SafeAreaView >
   );
 }
 const styles = StyleSheet.create({
+  safeArea: { flex: 1 },
+  pager: { flex: 1 },
   //TextInput
   viewInput: {
     backgroundColor: 'white',
@@ -468,7 +489,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 6,
+
     shadowRadius: 10,
     shadowOpacity: 1,
   },
@@ -502,6 +523,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     marginTop: -28,
     paddingTop: 25,
+    paddingBottom: 40,
   },
   listItem: {
     padding: 5,

@@ -1,20 +1,20 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import {
-  View,
+  Alert,
+  StatusBar,
   StyleSheet,
   Text,
-  StatusBar,
   TouchableOpacity,
-  Alert,
+  View,
 } from 'react-native';
-import {LogOut} from 'react-native-feather';
-import {useNavigation} from '@react-navigation/native';
+import { LogOut } from 'react-native-feather';
 
 const statusBarHeight = StatusBar.currentHeight
   ? StatusBar.currentHeight + 0
   : 64;
 
-export default function Header({name}) {
+export default function Header({ name }) {
   const navigation = useNavigation();
   const handleExit = () => {
     Alert.alert(
@@ -28,13 +28,11 @@ export default function Header({name}) {
         {
           text: 'Sair',
           onPress: () => {
-            // Navegue para a tela anterior
-            //  navigation.goBack();
             navigation.replace('ListaUsuarios');
           },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
   return (

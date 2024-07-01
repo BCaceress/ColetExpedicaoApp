@@ -1,20 +1,22 @@
-import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Switch,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Radio} from 'react-native-feather';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Radio } from 'react-native-feather';
 import api from '../../services/api';
 
 const Configuracao = () => {
   const [connection, setConnection] = useState('');
   const [leitura, setLeitura] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Recupera os valores do AsyncStorage
@@ -41,35 +43,41 @@ const Configuracao = () => {
       await AsyncStorage.setItem('@MyApp:connection', connection);
       await AsyncStorage.setItem('@MyApp:leTodas', JSON.stringify(leitura));
       Alert.alert('Sucesso', 'Configurações salvas com sucesso!', [
-        {text: 'OK'},
+        { text: 'OK' },
       ]);
     } catch (error) {
       Alert.alert('Erro', 'Ocorreu um erro ao salvar as configurações.', [
-        {text: 'OK'},
+        { text: 'OK' },
       ]);
     }
   };
 
   const testarConexao = async () => {
-    await AsyncStorage.setItem('@MyApp:connection', connection);
-    await AsyncStorage.setItem('@MyApp:leTodas', JSON.stringify(leitura));
     try {
+      setIsLoading(true);
+      // Salva os valores no AsyncStorage
+      await Promise.all([
+        AsyncStorage.setItem('@MyApp:connection', connection),
+        AsyncStorage.setItem('@MyApp:leTodas', JSON.stringify(leitura)),
+      ]);
+      // Faz a chamada à API
       const apiInstance = await api();
       const response = await apiInstance.get('/parametros?chave=EMPRESA');
-
       if (response.status === 200) {
         if (response.data && response.data.valor) {
-          Alert.alert('Sucesso', 'Conexão com API realizada!', [{text: 'OK'}]);
+          Alert.alert('Sucesso', 'Conexão com API realizada!', [{ text: 'OK' }]);
+          setIsLoading(false);
         } else {
-          Alert.alert('Erro', 'Dados inválidos na resposta da API.', [
-            {text: 'OK'},
-          ]);
+          Alert.alert('Erro', 'Dados inválidos na resposta da API.', [{ text: 'OK' }]);
+          setIsLoading(false);
         }
       } else {
-        Alert.alert('Erro', 'Favor verificar a conexão API.', [{text: 'OK'}]);
+        Alert.alert('Erro', 'Favor verificar a conexão API.', [{ text: 'OK' }]);
+        setIsLoading(false);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro na chamada da API.', [{text: 'OK'}]);
+      Alert.alert('Erro', 'Ocorreu um erro na chamada da API.', [{ text: 'OK' }]);
+      setIsLoading(false);
     }
   };
 
@@ -82,7 +90,7 @@ const Configuracao = () => {
       <View style={styles.viewPrincipal}>
         <Text style={styles.label}>Ler todas etiquetas:</Text>
         <Switch
-          trackColor={{false: '#767577', true: '#49BC99'}}
+          trackColor={{ false: '#767577', true: '#49BC99' }}
           thumbColor={leitura ? '#09A08D' : '#f4f3f4'}
           onValueChange={fnLerTodas}
           value={leitura}
@@ -98,7 +106,9 @@ const Configuracao = () => {
 
       <View style={styles.viewButton}>
         <TouchableOpacity style={styles.buttonTestar} onPress={testarConexao}>
-          <Radio size={32} color="white" />
+          {isLoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (<Radio size={32} color="white" />)}
         </TouchableOpacity>
         <TouchableOpacity style={styles.buttonSalvar} onPress={fnSalvar}>
           <Text style={styles.textSalvar}>Salvar</Text>

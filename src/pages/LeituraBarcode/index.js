@@ -1,12 +1,12 @@
+import { useRoute } from '@react-navigation/native';
 import React from 'react';
-import {View, StyleSheet, SafeAreaView} from 'react-native';
-import {useRoute} from '@react-navigation/native';
-import Header from '../../components/LeituraBarcode/Header';
-import Status from '../../components/LeituraBarcode/Status';
+import { SafeAreaView, StyleSheet } from 'react-native';
+import Header from '../../components/Header';
+import Status from '../../components/Status';
 
 export default function LeituraBarcode() {
   const route = useRoute();
-  const {id} = route.params;
+  const { id } = route.params;
 
   return (
     <SafeAreaView style={styles.container}>
