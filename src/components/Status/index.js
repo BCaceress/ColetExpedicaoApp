@@ -71,7 +71,7 @@ export default function Status({ name }) {
           // alterarCodSituacao();
           const todosValoresValidos = response.data.romaneio.etiquetas.every((etiqueta) => {
             const valor = etiqueta.codSituacao;
-            return valor === 2 || valor === 3;
+            return valor === 3;
           });
           if (todosValoresValidos) {
             Alert.alert(`Romaneio: ${JSON.stringify(response.data.romaneio.romaneio)}`, 'Não há etiquetas a coletar para este romaneio.', [{ text: 'OK' }]);
@@ -91,7 +91,6 @@ export default function Status({ name }) {
     }
 
   };
-
 
   const pesquisaBarcode2 = async () => {
     //Valida a leitura da etiqueta
@@ -113,10 +112,10 @@ export default function Status({ name }) {
     const result = barcode.substring(0, secondDotIndex);
     if (etiquetasMap[result]) {
       const etiqueta = etiquetasMap[result];
-      if (etiqueta.codSituacao === 0 || etiqueta.codSituacao === 1) {
+      if (etiqueta.codSituacao === 0 || etiqueta.codSituacao === 1 || etiqueta.codSituacao === 2) {
         etiqueta.codSituacao = 9;
         setContador(prevContador => prevContador + 1);
-      } else if (etiqueta.codSituacao === 2 || etiqueta.codSituacao === 3) {
+      } else if (etiqueta.codSituacao === 3) {
         Alert.alert(
           'Verificar',
           'Esta etiqueta já foi lida em outra coleta, ou o pedido já foi faturado.',
