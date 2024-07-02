@@ -69,7 +69,7 @@ const Login = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       <View style={styles.containerInferior}>
-        <Text style={styles.versao}>Versão 1.24.0107</Text>
+        <Text style={styles.versao}>Versão 1.24.0207</Text>
         <TouchableOpacity
           style={styles.btnConfig}
           onPress={() => {

@@ -50,48 +50,43 @@ export default function ConfirmacaoBarcode() {
     );
   };
 
-  const funcaoConfirmar = () => {
-    Alert.alert(
-      'Confirmação',
-      'Deseja realmente confirmar?',
-      [
-        {
-          text: 'Não',
-          style: 'cancel',
-        },
-        {
-          text: 'Sim',
-          onPress: enviarDados,
-        },
-      ],
-      { cancelable: true },
-    );
-  };
-
   const enviarDados = async () => {
     const apiInstance = await api();
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
-      await apiInstance.post(
-        '/expedicao/expedicao',
-        barcodeList,
-      );
-      setIsLoading(false);
-      Alert.alert(
-        'Sucesso',
-        'Ficha gerada com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: navigation.replace('LeituraBarcode', { id: user }),
-          },
-        ],
-        { cancelable: false },
-      );
+      const response = await apiInstance.post('/expedicao/expedicao', barcodeList);
+      if (response.status === 201) {
+        setIsLoading(false);
+        Alert.alert(
+          'Sucesso',
+          response.data.mensagem,
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.replace('LeituraBarcode', { id: user }),
+            },
+          ],
+          { cancelable: false }
+        );
+      } else {
+        setIsLoading(false);
+        Alert.alert(
+          'Erro',
+          response.data.mensagem,
+          [{ text: 'OK' }],
+          { cancelable: false }
+        );
+      }
     } catch (erro) {
       console.error(erro);
       setIsLoading(false);
+      Alert.alert(
+        'Erro',
+        'Ocorreu um erro ao enviar a ficha. Por favor, tente novamente mais tarde.',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
     }
   };
   const emojisWithIcons = [
@@ -190,7 +185,7 @@ export default function ConfirmacaoBarcode() {
       <View style={styles.containerInferior}>
         <TouchableOpacity style={styles.btConfirmar}
           onPress={() => {
-            funcaoConfirmar();
+            enviarDados();
           }}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />
