@@ -27,7 +27,7 @@ export default function ConfirmacaoBarcode() {
   const contador = route.params.contador;
   const barcodeList = route.params.barcodeList;
   const user = route.params.user;
-  barcodeList.romaneio.frete = '1';
+  barcodeList.romaneio.frete = 'P';
   barcodeList.romaneio.volumes = contador;
   barcodeList.romaneio.usuario = user;
 
@@ -89,12 +89,12 @@ export default function ConfirmacaoBarcode() {
       );
     }
   };
-  const emojisWithIcons = [
-    { title: '0 - Pago', icon: 'cash-check', id: '0' },
-    { title: '1 - A pagar', icon: 'cash-refund', id: '1' },
-    { title: '2 - Transporte Remetente', icon: 'truck', id: '2' },
-    { title: '3 - Transporte Destinatário', icon: 'truck-delivery', id: '3' },
-    { title: '9 - Sem Transporte', icon: 'truck-remove', id: '9' },
+  const listaFrete = [
+    { title: '0 - Pago', icon: 'cash-check', id: 'P' },
+    { title: '1 - A pagar', icon: 'cash-refund', id: 'A' },
+    { title: '2 - Transporte Remetente', icon: 'truck', id: 'R' },
+    { title: '3 - Transporte Destinatário', icon: 'truck-delivery', id: 'O' },
+    { title: '9 - Sem Transporte', icon: 'truck-remove', id: 'N' },
   ];
 
   return (
@@ -123,8 +123,8 @@ export default function ConfirmacaoBarcode() {
         <Text style={styles.titulo}>Deseja gerar as fichas de expedição?</Text>
         <Text style={styles.label}>Selecione o Frete:</Text>
         <SelectDropdown
-          data={emojisWithIcons}
-          defaultValue={emojisWithIcons[1]}
+          data={listaFrete}
+          defaultValue={listaFrete[1]}
           onSelect={(selectedItem, index) => {
             barcodeList.romaneio.frete = selectedItem.id;
           }}

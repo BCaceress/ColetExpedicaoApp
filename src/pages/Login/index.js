@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -8,8 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-//import {router} from 'expo-router';
-import { useIsFocused } from '@react-navigation/native';
+import packageJson from '../../../package.json';
 import api from '../../services/api.js';
 const Login = ({ navigation }) => {
   const [estaConectado, setEstaConectado] = useState(false);
@@ -69,7 +69,7 @@ const Login = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       <View style={styles.containerInferior}>
-        <Text style={styles.versao}>Versão 1.24.0207</Text>
+        <Text style={styles.versao}>Versão {packageJson.version}</Text>
         <TouchableOpacity
           style={styles.btnConfig}
           onPress={() => {

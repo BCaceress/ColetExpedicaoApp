@@ -1,6 +1,6 @@
 {
   "name": "ColetExpedicaoApp",
-  "version": "0.0.1",
+  "version": "1.24.3009",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -27,7 +27,7 @@
     "react-native-screens": "^3.32.0",
     "react-native-select-dropdown": "^4.0.1",
     "react-native-svg": "^15.3.0",
-    "react-native-vector-icons": "^10.1.0",
+    "react-native-vector-icons": "^10.2.0",
     "react-native-virtualized-view": "^1.0.0"
   },
   "devDependencies": {

@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -6,12 +5,13 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
   SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import {
   CheckCircle,
@@ -22,6 +22,7 @@ import {
 } from 'react-native-feather';
 import { FloatingAction } from 'react-native-floating-action';
 import PagerView from 'react-native-pager-view';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../services/api.js';
 
 export default function Status({ name }) {
@@ -34,7 +35,9 @@ export default function Status({ name }) {
   const [contador, setContador] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [leTodasEtiquetas, setLeitura] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const refPagerView = useRef(null);
+  const [modalType, setModalType] = useState(null);
 
   const moveToPage = (index) => {
     requestAnimationFrame(() => refPagerView.current?.setPage(index));
@@ -89,7 +92,29 @@ export default function Status({ name }) {
       Alert.alert('Erro', 'Formato de etiqueta inválido.', [{ text: 'OK' }]);
       setBarcode('');
     }
+  };
 
+  const abrirModal = (type) => {
+    setModalType(type);
+    setModalVisible(true);
+  };
+
+  const pesquisarNoModal = () => {
+    if (validarFormato(barcode)) {
+      pesquisaBarcode();
+      setModalVisible(false);
+    } else {
+      Alert.alert('Erro', 'Formato de etiqueta inválido.', [{ text: 'OK' }]);
+    }
+  };
+
+  const pesquisarNoModal2 = () => {
+    if (validarFormato(barcode)) {
+      pesquisaBarcode2();
+      setModalVisible(false);
+    } else {
+      Alert.alert('Erro', 'Formato de etiqueta inválido.', [{ text: 'OK' }]);
+    }
   };
 
   const pesquisaBarcode2 = async () => {
@@ -237,40 +262,92 @@ export default function Status({ name }) {
     <SafeAreaView style={styles.safeArea}>
       <View>
         {!showContainer ? (
-          <View style={styles.viewInput}>
-            <Search size={10} stroke="black" />
-            <TextInput
-              style={styles.textInput}
-              placeholderTextColor="#666"
-              showSoftInputOnFocus={false}
-              autoFocus={true}
-              onChangeText={text => setBarcode(text)}
-              placeholder="Inserir etiqueta"
-              returnKeyType="next"
-              onSubmitEditing={pesquisaBarcode}
-              value={barcode}
-              blurOnSubmit={false}
-            />
+          <View style={styles.containerViewInput}>
+            <View style={styles.viewInput}>
+              <Search size={10} stroke="black" />
+              <TextInput
+                style={styles.textInput}
+                placeholderTextColor="#666"
+                showSoftInputOnFocus={false}
+                autoFocus={true}
+                onChangeText={text => setBarcode(text)}
+                placeholder="Inserir etiqueta"
+                returnKeyType="next"
+                onSubmitEditing={pesquisaBarcode}
+                value={barcode}
+                blurOnSubmit={false}
+              />
+
+            </View>
+            <TouchableOpacity style={styles.buttonTeclado} onPress={() => abrirModal('default')}>
+              <Icon name="keyboard" size={28} color="#000" />
+            </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.viewInput}>
-            <Search size={10} color="#000" />
-            <TextInput
-              style={styles.textInput}
-              placeholderTextColor="#666"
-              showSoftInputOnFocus={false}
-              autoFocus={true}
-              onChangeText={text => setBarcode(text)}
-              placeholder="Inserir etiqueta"
-              returnKeyType="next"
-              onSubmitEditing={pesquisaBarcode2}
-              value={barcode}
-              blurOnSubmit={false}
-            />
+          <View style={styles.containerViewInput}>
+            <View style={styles.viewInput}>
+              <Search size={10} color="#000" />
+              <TextInput
+                style={styles.textInput}
+                placeholderTextColor="#666"
+                showSoftInputOnFocus={false}
+                autoFocus={true}
+                onChangeText={text => setBarcode(text)}
+                placeholder="Inserir etiqueta"
+                returnKeyType="next"
+                onSubmitEditing={pesquisaBarcode2}
+                value={barcode}
+                blurOnSubmit={false}
+              />
+            </View>
+            <TouchableOpacity style={styles.buttonTeclado} onPress={() => abrirModal('alternative')}>
+              <Icon name="keyboard" size={28} color="#000" />
+            </TouchableOpacity>
           </View>
         )}
       </View>
-
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(false);
+          setBarcode('');
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Inserir Etiqueta</Text>
+              <TouchableOpacity onPress={() => {
+                setModalVisible(false);
+                setBarcode('');
+              }}>
+                <Icon name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.textInputModal}
+              placeholder="Digite manualmente a etiqueta"
+              keyboardType="numeric"
+              autoFocus={true}
+              onChangeText={text => {
+                const regex = /^[0-9.]*$/;
+                if (regex.test(text)) {
+                  setBarcode(text);
+                }
+              }}
+              value={barcode}
+            />
+            <TouchableOpacity style={styles.searchButton} onPress={modalType === 'default' ? pesquisarNoModal : pesquisarNoModal2}>
+              <Text style={styles.buttonText}>Pesquisar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {showContainer ? (
         <View style={styles.container}>
           <PagerView style={styles.pagerView} initialPage={0}>
@@ -449,29 +526,44 @@ export default function Status({ name }) {
   );
 }
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  pager: { flex: 1 },
-  //TextInput
+  safeArea: { flex: 1, width: '100%' },
+  // TextInput
+  containerViewInput: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: -67,
+    marginLeft: 14,
+    marginEnd: 14,
+  },
   viewInput: {
     backgroundColor: 'white',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    marginBottom: 15,
-    paddingStart: 12,
-    paddingEnd: 18,
-    marginStart: 14,
-    marginEnd: 14,
-    marginTop: -67,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 6,
+    flex: 1,
+    marginEnd: 10,
+  },
+  buttonTeclado: {
+    backgroundColor: '#ccc',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#000',
+    elevation: 2,
   },
   textInput: {
     paddingStart: 7,
     height: 40,
+    flex: 1,
   },
-  //
+
   container: {
     backgroundColor: '#fff',
     flexDirection: 'row',
@@ -484,11 +576,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingTop: 12,
     paddingBottom: 6,
-    zIndex: 99,
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#ccc',
-
     shadowRadius: 10,
     shadowOpacity: 1,
   },
@@ -500,7 +589,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexDirection: 'row',
     justifyContent: 'space-between',
-
     marginTop: -28,
     paddingTop: 25,
   },
@@ -517,7 +605,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
 
-  //LISTA
+  // LISTA
   pages2: {
     flexDirection: 'column',
     marginTop: -28,
@@ -532,9 +620,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderRadius: 5,
-    overflow: 'hidden',
     borderWidth: 1,
-    shadowColor: '#000000',
     shadowRadius: 10,
     shadowOpacity: 1,
     marginStart: 14,
@@ -555,7 +641,7 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#09A08D',
-    borderRadius: 8, // Bordas arredondadas
+    borderRadius: 8,
     paddingHorizontal: 12,
     marginEnd: 10,
     marginTop: 10,
@@ -564,5 +650,58 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 15,
+  },
+
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#ffffff',
+    padding: 14,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  searchButton: {
+    backgroundColor: '#09A08D',
+    borderRadius: 7,
+    paddingVertical: 15,
+    marginTop: 20,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  textInputModal: {
+    height: 50,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 5,
+    marginTop: 7,
   },
 });
