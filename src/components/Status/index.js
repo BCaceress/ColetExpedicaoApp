@@ -421,11 +421,11 @@ export default function Status({ name }) {
                 keyExtractor={item => item.seq}
                 renderItem={({ item }) => (
                   <View style={styles.listItem}>
-                    <Text>
+                    <Text style={styles.textoLista}>
                       {item.programa}.{item.seq}
                     </Text>
-                    <Text>Tam. {item.tamanho}</Text>
-                    <Text>{item.quantidade} PR</Text>
+                    <Text style={styles.textoLista}>Tam. {item.tamanho}</Text>
+                    <Text style={styles.textoLista}>{item.quantidade} PR</Text>
                   </View>
                 )}
               />
@@ -457,11 +457,11 @@ export default function Status({ name }) {
                 keyExtractor={item => item.seq}
                 renderItem={({ item }) => (
                   <View style={styles.listItem}>
-                    <Text>
+                    <Text style={styles.textoLista}>
                       {item.programa}.{item.seq}
                     </Text>
-                    <Text>Tam. {item.tamanho}</Text>
-                    <Text>{item.quantidade} PR</Text>
+                    <Text style={styles.textoLista}>Tam. {item.tamanho}</Text>
+                    <Text style={styles.textoLista}>{item.quantidade} PR</Text>
                   </View>
                 )}
               />
@@ -483,11 +483,11 @@ export default function Status({ name }) {
               keyExtractor={item => item.seq}
               renderItem={({ item }) => (
                 <View style={styles.listItem}>
-                  <Text>
+                  <Text style={styles.textoLista}>
                     {item.programa}.{item.seq}
                   </Text>
-                  <Text>Tam. {item.tamanho}</Text>
-                  <Text>{item.quantidade} PR</Text>
+                  <Text style={styles.textoLista} >Tam. {item.tamanho}</Text>
+                  <Text style={styles.textoLista}>{item.quantidade} PR</Text>
                 </View>
               )}
             />
@@ -562,6 +562,7 @@ const styles = StyleSheet.create({
     paddingStart: 7,
     height: 40,
     flex: 1,
+    color: '#000'
   },
 
   container: {
@@ -625,6 +626,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     marginStart: 14,
     marginEnd: 14,
+
+  },
+  textoLista: {
+    color: '#000'
   },
   tituloPage: {
     flexDirection: 'row',
@@ -638,6 +643,7 @@ const styles = StyleSheet.create({
     marginLeft: 14,
     marginRight: 14,
     marginTop: 10,
+    color: '#000'
   },
   button: {
     backgroundColor: '#09A08D',
@@ -703,5 +709,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 5,
     marginTop: 7,
+    color: '#000'
   },
 });

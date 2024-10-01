@@ -93,6 +93,7 @@ const Configuracao = () => {
         placeholderTextColor="#999"
         value={connection}
         onChangeText={text => setConnection(text)}
+        autoCapitalize="none"
       />
 
       <View style={styles.viewButton}>
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    marginBottom: 8,
+    marginBottom: 0,
     color: '#333',
     fontWeight: '500',
   },
@@ -145,6 +146,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: '#fff',
     marginBottom: 20,
+    marginTop: 10,
     color: '#333',
   },
   viewButton: {

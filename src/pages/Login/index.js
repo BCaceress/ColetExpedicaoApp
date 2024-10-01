@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import packageJson from '../../../package.json';
 import api from '../../services/api.js';
+
 const Login = ({ navigation }) => {
   const [estaConectado, setEstaConectado] = useState(false);
   const isFocused = useIsFocused();
@@ -24,25 +25,20 @@ const Login = ({ navigation }) => {
   const fetchData = async () => {
     const apiInstance = await api();
     try {
-      // Primeira chamada de API
       await apiInstance.get('/parametros?chave=EMPRESA');
       setEstaConectado(true);
     } catch (error) {
-      // console.error("Erro ao obter dados da API:", error);
       setEstaConectado(false);
+      console.error("Erro ao obter dados da API:", error);
     }
   };
 
-  const navegarProximaPagina = async () => {
+  const navegarProximaPagina = () => {
     if (estaConectado) {
-      // Se a conexão com a API for bem-sucedida, navegue para a próxima página.
-
       navigation.replace('ListaUsuarios');
     } else {
-      // Se a conexão com a API falhar, mostre um alerta.
       Alert.alert('Erro', 'Não foi possível conectar com a API.');
-
-      fetchData();
+      fetchData(); // Retry fetching data on error
     }
   };
 
@@ -72,9 +68,7 @@ const Login = ({ navigation }) => {
         <Text style={styles.versao}>Versão {packageJson.version}</Text>
         <TouchableOpacity
           style={styles.btnConfig}
-          onPress={() => {
-            navigation.navigate('Configuracao');
-          }}>
+          onPress={() => navigation.navigate('Configuracao')}>
           <Text style={styles.btnConfigTxt}> Configurações </Text>
         </TouchableOpacity>
       </View>
@@ -92,17 +86,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     marginTop: '16%',
-  },
-  button: {
-    width: '100%',
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    fontSize: 20,
-    alignSelf: 'center',
   },
   img: {
     width: 290,

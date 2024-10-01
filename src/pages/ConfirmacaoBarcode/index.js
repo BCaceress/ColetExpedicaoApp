@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,84 +18,65 @@ import api from '../../services/api';
 import Styles from './Styles';
 Icon.loadFont();
 
-const statusBarHeight = StatusBar.currentHeight
-  ? StatusBar.currentHeight + 2
-  : 64;
+const statusBarHeight = StatusBar.currentHeight ? StatusBar.currentHeight + 2 : 64;
+
 export default function ConfirmacaoBarcode() {
   const [isLoading, setIsLoading] = useState(false);
   const route = useRoute();
-  const contador = route.params.contador;
-  const barcodeList = route.params.barcodeList;
-  const user = route.params.user;
-  barcodeList.romaneio.frete = 'P';
-  barcodeList.romaneio.volumes = contador;
-  barcodeList.romaneio.usuario = user;
-
   const navigation = useNavigation();
-  const handleExit = () => {
+  const { contador, barcodeList, user } = route.params;
+
+  barcodeList.romaneio = {
+    ...barcodeList.romaneio,
+    frete: 'P',
+    volumes: contador,
+    usuario: user,
+  };
+
+  const handleExit = useCallback(() => {
     Alert.alert(
       'Retornar',
       'Deseja realmente voltar?',
       [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
+        { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Sim',
-          onPress: navigation.goBack(),
+          onPress: () => navigation.goBack(),
         },
       ],
       { cancelable: true },
     );
-  };
+  }, [navigation]);
 
-  const enviarDados = async () => {
+  const enviarDados = useCallback(async () => {
     const apiInstance = await api();
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 100));
     try {
       const response = await apiInstance.post('/expedicao/expedicao', barcodeList);
+      const message = response.data.mensagem;
+
       if (response.status === 201) {
-        setIsLoading(false);
-        Alert.alert(
-          'Sucesso',
-          response.data.mensagem,
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.replace('LeituraBarcode', { id: user }),
-            },
-          ],
-          { cancelable: false }
-        );
+        Alert.alert('Sucesso', message, [
+          { text: 'OK', onPress: () => navigation.replace('LeituraBarcode', { id: user }) },
+        ]);
       } else {
-        setIsLoading(false);
-        Alert.alert(
-          'Erro',
-          response.data.mensagem,
-          [{ text: 'OK' }],
-          { cancelable: false }
-        );
+        Alert.alert('Erro', message, [{ text: 'OK' }]);
       }
-    } catch (erro) {
-      console.error(erro);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erro', 'Ocorreu um erro ao enviar a ficha. Por favor, tente novamente mais tarde.', [{ text: 'OK' }]);
+    } finally {
       setIsLoading(false);
-      Alert.alert(
-        'Erro',
-        'Ocorreu um erro ao enviar a ficha. Por favor, tente novamente mais tarde.',
-        [{ text: 'OK' }],
-        { cancelable: false }
-      );
     }
-  };
-  const listaFrete = [
+  }, [barcodeList, navigation, user]);
+
+  const listaFrete = useMemo(() => [
     { title: '0 - Pago', icon: 'cash-check', id: 'P' },
     { title: '1 - A pagar', icon: 'cash-refund', id: 'A' },
     { title: '2 - Transporte Remetente', icon: 'truck', id: 'R' },
     { title: '3 - Transporte Destinatário', icon: 'truck-delivery', id: 'O' },
     { title: '9 - Sem Transporte', icon: 'truck-remove', id: 'N' },
-  ];
+  ], []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -125,40 +106,32 @@ export default function ConfirmacaoBarcode() {
         <SelectDropdown
           data={listaFrete}
           defaultValue={listaFrete[1]}
-          onSelect={(selectedItem, index) => {
+          onSelect={(selectedItem) => {
             barcodeList.romaneio.frete = selectedItem.id;
           }}
-          renderButton={(selectedItem, isOpen) => {
-            return (
-              <View style={styles.dropdownButtonStyle}>
-                {selectedItem && (
-                  <Icon
-                    name={selectedItem.icon}
-                    style={styles.dropdownButtonIconStyle}
-                  />
-                )}
-                <Text style={styles.dropdownButtonTxtStyle}>
-                  {(selectedItem && selectedItem.title) || 'Selecione o Frete'}
-                </Text>
-                <Icon
-                  name={isOpen ? 'chevron-up' : 'chevron-down'}
-                  style={styles.dropdownButtonArrowStyle}
-                />
-              </View>
-            );
-          }}
-          renderItem={(item, index, isSelected) => {
-            return (
-              <View
-                style={{
-                  ...styles.dropdownItemStyle,
-                  ...(isSelected && { backgroundColor: '#D2D9DF' }),
-                }}>
-                <Icon name={item.icon} style={styles.dropdownItemIconStyle} />
-                <Text style={styles.dropdownItemTxtStyle}>{item.title}</Text>
-              </View>
-            );
-          }}
+          renderButton={(selectedItem, isOpen) => (
+            <View style={styles.dropdownButtonStyle}>
+              {selectedItem && (
+                <Icon name={selectedItem.icon} style={styles.dropdownButtonIconStyle} />
+              )}
+              <Text style={styles.dropdownButtonTxtStyle}>
+                {(selectedItem && selectedItem.title) || 'Selecione o Frete'}
+              </Text>
+              <Icon
+                name={isOpen ? 'chevron-up' : 'chevron-down'}
+                style={styles.dropdownButtonArrowStyle}
+              />
+            </View>
+          )}
+          renderItem={(item, index, isSelected) => (
+            <View style={{
+              ...styles.dropdownItemStyle,
+              ...(isSelected && { backgroundColor: '#D2D9DF' }),
+            }}>
+              <Icon name={item.icon} style={styles.dropdownItemIconStyle} />
+              <Text style={styles.dropdownItemTxtStyle}>{item.title}</Text>
+            </View>
+          )}
           showsVerticalScrollIndicator={false}
           dropdownStyle={styles.dropdownMenuStyle}
         />
@@ -176,23 +149,19 @@ export default function ConfirmacaoBarcode() {
             rounded={false}
             showBorder={true}
             editable={false}
-            onChange={num => {
+            onChange={(num) => {
               barcodeList.romaneio.volumes = num;
             }}
           />
         </View>
       </View>
       <View style={styles.containerInferior}>
-        <TouchableOpacity style={styles.btConfirmar}
-          onPress={() => {
-            enviarDados();
-          }}>
+        <TouchableOpacity style={styles.btConfirmar} onPress={enviarDados}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.txtConfirmar}>
-              Confirmar
-            </Text>)}
+            <Text style={styles.txtConfirmar}>Confirmar</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -200,134 +169,26 @@ export default function ConfirmacaoBarcode() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  container2: {
-    backgroundColor: '#09A08D',
-    paddingTop: statusBarHeight,
-    flexDirection: 'row',
-    paddingStart: 16,
-    paddingEnd: 16,
-    paddingBottom: 65,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  username: {
-    fontSize: 18,
-    color: '#Fff',
-  },
-  boldText: {
-    fontWeight: 'bold',
-    fontSize: 20,
-  },
-  content2: {
-    flexDirection: 'row',
-    marginTop: -50,
-    marginStart: 14,
-  },
-  textoEsquerda: {
-    color: '#fff',
-    fontSize: 19,
-    fontWeight: 'bold',
-  },
-  buttonUser: {
-    width: 35,
-    height: 35,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 35 / 2,
-  },
-  containerCentral: {
-    flex: 1,
-    marginTop: 28,
-    marginStart: 14,
-    marginEnd: 14,
-  },
-  titulo: {
-    fontSize: 19,
-    lineHeight: 32,
-    fontWeight: 'bold',
-    color: '#464646',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 8,
-    marginTop: 20,
-  },
-  containerInferior: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    width: '100%',
-  },
-  //Dropdown
-  dropdownButtonStyle: {
-    height: 50,
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    elevation: 4,
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
-  },
-  dropdownButtonTxtStyle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#464646',
-  },
-  dropdownButtonArrowStyle: {
-    fontSize: 28,
-  },
-  dropdownButtonIconStyle: {
-    fontSize: 28,
-    marginRight: 8,
-  },
-  dropdownMenuStyle: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  dropdownItemStyle: {
-    width: '100%',
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  dropdownItemTxtStyle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#464646',
-  },
-  dropdownItemIconStyle: {
-    fontSize: 28,
-    marginRight: 8,
-  },
-  //button confirmar
-  btConfirmar: {
-    padding: 10,
-    width: '100%',
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#09A08D',
-    marginTop: 80,
-  },
-  txtConfirmar: {
-    textAlign: 'center',
-    color: '#fff',
-    fontSize: 19,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1 },
+  container2: { backgroundColor: '#09A08D', paddingTop: statusBarHeight, flexDirection: 'row', padding: 16, paddingBottom: 65 },
+  content: { flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  username: { fontSize: 18, color: '#Fff' },
+  boldText: { fontWeight: 'bold', fontSize: 20 },
+  content2: { flexDirection: 'row', marginTop: -50, marginStart: 14 },
+  textoEsquerda: { color: '#fff', fontSize: 19, fontWeight: 'bold' },
+  buttonUser: { width: 35, height: 35, backgroundColor: 'rgba(255,255,255,0.5)', justifyContent: 'center', alignItems: 'center', borderRadius: 17.5 },
+  containerCentral: { flex: 1, marginTop: 28, marginStart: 14, marginEnd: 14 },
+  titulo: { fontSize: 19, lineHeight: 32, fontWeight: 'bold', color: '#464646' },
+  label: { fontSize: 18, marginBottom: 8, marginTop: 20, color: '#000' },
+  containerInferior: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', width: '100%' },
+  dropdownButtonStyle: { height: 50, backgroundColor: '#fff', borderRadius: 6, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12, elevation: 4, shadowOpacity: 0.23, shadowRadius: 2.62 },
+  dropdownButtonTxtStyle: { flex: 1, fontSize: 18, fontWeight: '500', color: '#464646' },
+  dropdownButtonArrowStyle: { fontSize: 28 },
+  dropdownButtonIconStyle: { fontSize: 28, marginRight: 8, color: '#000' },
+  dropdownMenuStyle: { backgroundColor: '#fff', borderRadius: 8 },
+  dropdownItemStyle: { width: '100%', flexDirection: 'row', paddingHorizontal: 12, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
+  dropdownItemTxtStyle: { flex: 1, fontSize: 18, fontWeight: '500', color: '#464646' },
+  dropdownItemIconStyle: { fontSize: 28, marginRight: 8, color: '#000' },
+  btConfirmar: { padding: 10, width: '100%', height: 50, justifyContent: 'center', alignItems: 'center', backgroundColor: '#09A08D', marginTop: 80 },
+  txtConfirmar: { textAlign: 'center', color: '#fff', fontSize: 19, fontWeight: 'bold' },
 });
